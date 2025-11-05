@@ -1,3 +1,1 @@
-# DS2025_Group_Grad_Laurentiu_Calin_Assignment_1
-
-Deployment diagram
+# Deployment diagram
