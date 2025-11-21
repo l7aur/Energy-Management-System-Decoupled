@@ -1,0 +1,134 @@
+services:
+  # authentication microservice database container
+  authentication-microservice-database:
+    image: postgres
+    container_name: authentication-microservice-database
+    restart: always
+    environment:
+      POSTGRES_USER: DS_l7aur_authentication_microservice
+      POSTGRES_PASSWORD: 2003
+      POSTGRES_DB: authentication_microservice_database
+    volumes:
+      - authentication-microservice-database:/var/lib/postgresql
+    networks:
+      - authentication-network
+
+    # authentication microservice backend container
+  authentication-microservice:
+    build:
+      context: ./authentication-microservice
+      dockerfile: ./Dockerfile
+    container_name: authentication-microservice
+    environment:
+      - DB_IP=authentication-microservice-database
+      - DB_PORT=5432
+      - DB_DBNAME=authentication_microservice_database
+      - DB_USER=DS_l7aur_authentication_microservice
+      - DB_PASSWORD=2003
+    depends_on:
+      - authentication-microservice-database
+    networks:
+      - traefik-network
+      - authentication-network
+
+  # device microservice database container
+  device-microservice-database:
+    image: postgres
+    container_name: device-microservice-database
+    restart: always
+    environment:
+      POSTGRES_USER: DS_l7aur_device_microservice
+      POSTGRES_PASSWORD: 2003
+      POSTGRES_DB: device_microservice_database
+    volumes:
+      - device-microservice-database:/var/lib/postgresql
+    networks:
+      - device-network
+
+  # device microservice backend container
+  device-microservice:
+    build:
+      context: ./device-microservice
+      dockerfile: ./Dockerfile
+    container_name: device-microservice
+    environment:
+      - DB_IP=device-microservice-database
+      - DB_PORT=5432
+      - DB_DBNAME=device_microservice_database
+      - DB_USER=DS_l7aur_device_microservice
+      - DB_PASSWORD=2003
+    depends_on:
+      - device-microservice-database
+    networks:
+      - traefik-network
+      - device-network
+
+  # user microservice database container
+  user-microservice-database:
+    image: postgres
+    container_name: user-microservice-database
+    restart: always
+    environment:
+      POSTGRES_USER: DS_l7aur_user_microservice
+      POSTGRES_PASSWORD: 2003
+      POSTGRES_DB: user_microservice_database
+    volumes:
+      - user-microservice-database:/var/lib/postgresql
+    networks:
+      - user-network
+
+  # user microservice backend container
+  user-microservice:
+    build:
+      context: ./user-microservice
+      dockerfile: ./Dockerfile
+    container_name: user-microservice
+    environment:
+      - DB_IP=user-microservice-database
+      - DB_PORT=5432
+      - DB_DBNAME=user_microservice_database
+      - DB_USER=DS_l7aur_user_microservice
+      - DB_PASSWORD=2003
+    depends_on:
+      - user-microservice-database
+    networks:
+      - traefik-network
+      - user-network
+
+
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    restart: always
+    ports:
+      - "80:80" # The HTTP port
+      # - "443:443" # The HTTPS port
+      - "8081:8080" # Dashboard port
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro" # Traefik can listen to the Docker events
+      - "./traefik.yml:/etc/traefik/traefik.yml:ro" # Static configuration file
+      - "./dynamic:/etc/traefik/dynamic:ro" # Dynamic configuration files
+      - "./logs:/var/log/traefik" # Log files
+    networks:
+      - traefik-network
+
+
+
+volumes:
+  authentication-microservice-database:
+  device-microservice-database:
+  user-microservice-database:
+
+networks:
+  traefik-network:
+    name: traefik-network
+    driver: bridge
+  authentication-network:
+    name: authentication-network
+    driver: bridge
+  device-network:
+    name: device-network
+    driver: bridge
+  user-network:
+    name: user-network
+    driver: bridge
